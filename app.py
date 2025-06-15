@@ -45,6 +45,10 @@ if not models_loaded:
     st.error("❌ Model files tidak dapat dimuat. Pastikan semua file .pkl sudah ter-upload ke repository.")
     st.stop()
 
+# Debug info untuk memastikan model KMeans sudah benar
+if models_loaded:
+    st.info(f"🔧 **Debug Info:** KMeans expects {kmeans.n_features_in_} features, Cluster centers shape: {kmeans.cluster_centers_.shape}")
+
 # Load data 
 @st.cache_data
 def load_data():
