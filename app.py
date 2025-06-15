@@ -114,8 +114,8 @@ if models_loaded and data_loaded:
         X_pca = pca.transform(X_scaled)
         pca_df = pd.DataFrame(X_pca, columns=['PC1', 'PC2'])
         
-        # Cluster menggunakan data PCA
-        cluster = kmeans.predict(pca_df)
+        # Cluster menggunakan data PCA (tanpa feature names untuk menghindari error)
+        cluster = kmeans.predict(X_pca)
         data_transformed['Cluster'] = cluster
         
         # Prepare final features
@@ -221,7 +221,7 @@ if st.button("Prediksi Loan Status") and models_loaded:
         X_user_scaled = scaler.transform(input_df[features])
         # PCA Transform
         X_user_pca = pca.transform(X_user_scaled)
-        # Cluster menggunakan data PCA
+        # Cluster menggunakan data PCA (gunakan array numpy, bukan dataframe)
         user_cluster = kmeans.predict(X_user_pca)
         # Gabungkan fitur scaled dengan cluster
         X_user_final = np.concatenate([X_user_scaled, user_cluster.reshape(-1,1)], axis=1)
