@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 
-# Import joblib dengan error handling
+# Import joblib 
 try:
     import joblib
 except ImportError:
@@ -24,7 +24,7 @@ st.write("Masukkan data peminjam untuk memprediksi kemungkinan gagal bayar pinja
 st.markdown("---")
 st.subheader("Evaluasi Model")
 
-# Load model dengan error handling
+# Load model
 @st.cache_resource
 def load_models():
     try:
@@ -43,12 +43,12 @@ if not models_loaded:
     st.error("❌ Model files tidak dapat dimuat. Pastikan semua file .pkl sudah ter-upload ke repository.")
     st.stop()
 
-# Load data untuk evaluasi
+# Load data 
 @st.cache_data
 def load_data():
     try:
         df = pd.read_csv('credit_risk_dataset.csv')
-        # Imputasi sesuai training
+        # Imputasi 
         df['person_emp_length'] = df['person_emp_length'].fillna(df['person_emp_length'].median())
         df['loan_int_rate'] = df['loan_int_rate'].fillna(df['loan_int_rate'].mean())
         return df, True
@@ -62,7 +62,7 @@ if not data_loaded:
     st.error("❌ Dataset tidak dapat dimuat. Pastikan credit_risk_dataset.csv sudah ter-upload.")
     st.stop()
 
-# Mapping label encoder sesuai training
+# Mapping label encoder 
 home_ownership_map = {'RENT':0, 'OWN':1, 'MORTGAGE':2, 'OTHER':3}
 loan_intent_map = {'DEBTCONSOLIDATION':0, 'EDUCATION':1, 'HOMEIMPROVEMENT':2, 'MEDICAL':3, 'PERSONAL':4, 'VENTURE':5}
 loan_grade_map = {'A':0, 'B':1, 'C':2, 'D':3, 'E':4, 'F':5, 'G':6}
@@ -94,7 +94,7 @@ def preprocess_eval(df):
 
 if models_loaded and data_loaded:
     try:
-        # Preprocessing sama seperti di notebook
+        # Preprocessing
         data_transformed = data.copy()
         categorical_cols = ['person_home_ownership', 'loan_intent', 'loan_grade', 'cb_person_default_on_file']
         for col in categorical_cols:
@@ -118,14 +118,13 @@ if models_loaded and data_loaded:
         cluster = kmeans.predict(pca_df)
         data_transformed['Cluster'] = cluster
         
-        # Prepare final features (sama seperti training)
+        # Prepare final features
         X = data_transformed[features_for_clustering + ['Cluster']]
         y = data_transformed['loan_status']
         
-        # Split data dengan random_state yang sama seperti notebook
+        # Split data
         X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, test_size=0.2, random_state=42)
         
-        # Evaluasi hanya pada test set (bukan seluruh data)
         y_pred = model.predict(X_test)
         y_prob = model.predict_proba(X_test)[:,1]
         
@@ -135,7 +134,6 @@ if models_loaded and data_loaded:
         f1 = f1_score(y_test, y_pred)
         roc_auc = roc_auc_score(y_test, y_prob)
 
-        # Tampilkan metrik dengan info bahwa ini adalah hasil pada test set
         st.info("📊 **Evaluasi Model pada Test Set (20% data yang tidak digunakan untuk training)**")
         
         col1, col2, col3, col4 = st.columns(4)
@@ -148,7 +146,7 @@ if models_loaded and data_loaded:
         with col4:
             st.error(f"ROC AUC: **{roc_auc:.2f}**")
 
-        # Tambahkan info ukuran dataset
+        # info ukuran dataset
         st.write(f"📈 **Dataset Info:** Total: {len(data):,} samples | Training: {len(X_train):,} | Test: {len(X_test):,}")
 
         plot_option = st.selectbox("Pilih grafik untuk ditampilkan:", ["Pilih", "ROC AUC Curve", "Confusion Matrix"])
