@@ -1,3 +1,5 @@
+# Credit Risk Analysis - Streamlit App
+# Updated: KMeans model fixed to use 2 PCA features
 import streamlit as st
 import pandas as pd
 import numpy as np
