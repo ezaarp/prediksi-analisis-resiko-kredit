@@ -1,10 +1,8 @@
-# Credit Risk Analysis - Streamlit App
-# Updated: KMeans model fixed to use 2 PCA features
 import streamlit as st
 import pandas as pd
 import numpy as np
 
-# Import joblib 
+# Import joblib dengan error handling
 try:
     import joblib
 except ImportError:
@@ -26,7 +24,7 @@ st.write("Masukkan data peminjam untuk memprediksi kemungkinan gagal bayar pinja
 st.markdown("---")
 st.subheader("Evaluasi Model")
 
-# Load model
+# Load model dengan error handling
 @st.cache_resource
 def load_models():
     try:
@@ -45,16 +43,12 @@ if not models_loaded:
     st.error("❌ Model files tidak dapat dimuat. Pastikan semua file .pkl sudah ter-upload ke repository.")
     st.stop()
 
-# Debug info untuk memastikan model KMeans sudah benar
-if models_loaded:
-    st.info(f"🔧 **Debug Info:** KMeans expects {kmeans.n_features_in_} features, Cluster centers shape: {kmeans.cluster_centers_.shape}")
-
-# Load data 
+# Load data untuk evaluasi
 @st.cache_data
 def load_data():
     try:
         df = pd.read_csv('credit_risk_dataset.csv')
-        # Imputasi 
+        # Imputasi sesuai training
         df['person_emp_length'] = df['person_emp_length'].fillna(df['person_emp_length'].median())
         df['loan_int_rate'] = df['loan_int_rate'].fillna(df['loan_int_rate'].mean())
         return df, True
@@ -68,7 +62,7 @@ if not data_loaded:
     st.error("❌ Dataset tidak dapat dimuat. Pastikan credit_risk_dataset.csv sudah ter-upload.")
     st.stop()
 
-# Mapping label encoder 
+# Mapping label encoder sesuai training
 home_ownership_map = {'RENT':0, 'OWN':1, 'MORTGAGE':2, 'OTHER':3}
 loan_intent_map = {'DEBTCONSOLIDATION':0, 'EDUCATION':1, 'HOMEIMPROVEMENT':2, 'MEDICAL':3, 'PERSONAL':4, 'VENTURE':5}
 loan_grade_map = {'A':0, 'B':1, 'C':2, 'D':3, 'E':4, 'F':5, 'G':6}
@@ -100,7 +94,7 @@ def preprocess_eval(df):
 
 if models_loaded and data_loaded:
     try:
-        # Preprocessing
+        # Preprocessing sama seperti di notebook
         data_transformed = data.copy()
         categorical_cols = ['person_home_ownership', 'loan_intent', 'loan_grade', 'cb_person_default_on_file']
         for col in categorical_cols:
@@ -120,17 +114,18 @@ if models_loaded and data_loaded:
         X_pca = pca.transform(X_scaled)
         pca_df = pd.DataFrame(X_pca, columns=['PC1', 'PC2'])
         
-        # Cluster menggunakan data PCA (tanpa feature names untuk menghindari error)
-        cluster = kmeans.predict(X_pca)
+        # Cluster menggunakan data PCA
+        cluster = kmeans.predict(pca_df)
         data_transformed['Cluster'] = cluster
         
-        # Prepare final features
+        # Prepare final features (sama seperti training)
         X = data_transformed[features_for_clustering + ['Cluster']]
         y = data_transformed['loan_status']
         
-        # Split data
+        # Split data dengan random_state yang sama seperti notebook
         X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, test_size=0.2, random_state=42)
         
+        # Evaluasi hanya pada test set (bukan seluruh data)
         y_pred = model.predict(X_test)
         y_prob = model.predict_proba(X_test)[:,1]
         
@@ -227,7 +222,7 @@ if st.button("Prediksi Loan Status") and models_loaded:
         X_user_scaled = scaler.transform(input_df[features])
         # PCA Transform
         X_user_pca = pca.transform(X_user_scaled)
-        # Cluster menggunakan data PCA (gunakan array numpy, bukan dataframe)
+        # Cluster menggunakan data PCA
         user_cluster = kmeans.predict(X_user_pca)
         # Gabungkan fitur scaled dengan cluster
         X_user_final = np.concatenate([X_user_scaled, user_cluster.reshape(-1,1)], axis=1)
